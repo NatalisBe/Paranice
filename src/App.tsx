@@ -67,9 +67,54 @@ const GameRouter = () => {
   return <Welcome />;
 };
 
+const BackgroundMusic = () => {
+  const audioRef = React.useRef<HTMLAudioElement>(null);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    audio.volume = 0.005; // Low volume
+
+    const playAudio = () => {
+      audio.play().catch(error => {
+        console.log("Autoplay prevented, waiting for user interaction.", error);
+      });
+    };
+
+    playAudio();
+
+    const handleInteraction = () => {
+      if (audio.paused) {
+        playAudio();
+      }
+      document.removeEventListener('click', handleInteraction);
+      document.removeEventListener('touchstart', handleInteraction);
+    };
+
+    document.addEventListener('click', handleInteraction);
+    document.addEventListener('touchstart', handleInteraction);
+
+    return () => {
+      document.removeEventListener('click', handleInteraction);
+      document.removeEventListener('touchstart', handleInteraction);
+    };
+  }, []);
+
+  return (
+    <audio
+      ref={audioRef}
+      src="https://image2url.com/r2/default/audio/1774945584080-361ea3ab-47ba-4664-9234-e646ef528a40.mp3"
+      loop
+      autoPlay
+    />
+  );
+};
+
 export default function App() {
   return (
     <GameProvider>
+      <BackgroundMusic />
       <GameRouter />
     </GameProvider>
   );
