@@ -1,14 +1,11 @@
 import React, { useState } from 'react';
 import { useGame } from '../store/GameContext';
-import { CHARACTERS } from '../types';
-import { CharacterSVG } from './Characters';
 
 export const Welcome = () => {
   const [name, setName] = useState('');
   const [gameCode, setGameCode] = useState('');
   const { createGame, joinGame } = useGame();
   const [isJoining, setIsJoining] = useState(false);
-
   const [loading, setLoading] = useState(false);
 
   const handleCreate = async () => {
@@ -35,21 +32,6 @@ export const Welcome = () => {
 
   return (
     <div className="relative min-h-screen w-full flex flex-col items-center justify-center p-4">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-30">
-        {CHARACTERS.normal.slice(0, 4).map((characterId, i) => (
-          <CharacterSVG
-            key={i}
-            id={characterId}
-            className="absolute figura-idle w-24 h-24 object-contain"
-            style={{
-              left: `${10 + i * 20}%`,
-              top: `${20 + (i % 3) * 20}%`,
-              animationDelay: `${i * 0.5}s`,
-            }}
-          />
-        ))}
-      </div>
-
       <div className="z-10 bg-white/80 backdrop-blur-md p-8 rounded-[15px] shadow-xl w-full max-w-md flex flex-col items-center animate-spawn">
         <img
           src="https://paranice.co/wp-content/themes/whynot-web/paranice/eng-icons/logo_paranice.png"

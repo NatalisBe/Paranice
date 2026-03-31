@@ -14,7 +14,7 @@ export const Countdown = () => {
   }, [count]);
 
   return (
-    <div className="fixed inset-0 bg-pn-accent flex items-center justify-center z-50 overflow-hidden">
+    <div className="fixed inset-0 bg-pn-dark-lavender flex items-center justify-center z-50 overflow-hidden">
       {!showGo ? (
         <div 
           key={count} 

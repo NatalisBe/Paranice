@@ -7,6 +7,7 @@
   --color-pn-cream: #EEDBB6;
   --color-pn-cream-light: #F4E1C1;
   --color-pn-red: #CC2200;
+  --color-pn-dark-lavender: #6D5C91;
   
   --font-display: "Nunito", "Fredoka One", "Varela Round", sans-serif;
   --font-body: "Nunito", "Fredoka One", "Varela Round", sans-serif;
@@ -17,6 +18,7 @@
   .bg-pn-accent { background-color: var(--color-pn-accent); }
   .bg-pn-cream { background-color: var(--color-pn-cream); }
   .bg-pn-cream-light { background-color: var(--color-pn-cream-light); }
+  .bg-pn-dark-lavender { background-color: var(--color-pn-dark-lavender); }
   
   .text-pn-accent { color: var(--color-pn-accent); }
   .text-pn-text { color: var(--color-pn-text); }
@@ -99,6 +101,24 @@
 
 .animate-glow {
   animation: powerup-glow 1.5s ease-in-out infinite;
+}
+
+@keyframes float-bubble {
+  0% { transform: translateY(110vh) translateX(0) scale(1); opacity: 0; }
+  10% { opacity: 0.25; }
+  50% { transform: translateY(50vh) translateX(25px) scale(1.05); }
+  90% { opacity: 0.25; }
+  100% { transform: translateY(-10vh) translateX(-25px) scale(1); opacity: 0; }
+}
+
+@keyframes pop-inward {
+  0% { transform: scale(1); opacity: 0.3; }
+  40% { transform: scale(0.8); opacity: 0.8; }
+  100% { transform: scale(0); opacity: 0; }
+}
+
+.animate-pop-inward {
+  animation: pop-inward 0.2s ease-in forwards !important;
 }
 
 body {
