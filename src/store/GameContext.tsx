@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { db, auth, signIn } from '../lib/firebase';
+import { db } from '../lib/firebase';
 import {
   collection,
   doc,
@@ -35,22 +35,28 @@ export const useGame = () => {
   return context;
 };
 
+const getLocalUid = () => {
+  let uid = localStorage.getItem('local_uid');
+  if (!uid) {
+    uid = 'user_' + Math.random().toString(36).substring(2, 15);
+    localStorage.setItem('local_uid', uid);
+  }
+  return uid;
+};
+
 export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [game, setGame] = useState<Game | null>(null);
   const [player, setPlayer] = useState<Player | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
   const [figures, setFigures] = useState<Figure[]>([]);
-  const [currentUser, setCurrentUser] = useState(auth.currentUser);
+  const [currentUserUid, setCurrentUserUid] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsub = auth.onAuthStateChanged(user => {
-      setCurrentUser(user);
-    });
-    return () => unsub();
+    setCurrentUserUid(getLocalUid());
   }, []);
 
   useEffect(() => {
-    if (!game?.id || !currentUser) return;
+    if (!game?.id || !currentUserUid) return;
 
     const unsubGame = onSnapshot(doc(db, 'games', game.id), (docSnap) => {
       if (docSnap.exists()) {
@@ -58,7 +64,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
-    const unsubPlayer = onSnapshot(doc(db, `games/${game.id}/players`, currentUser.uid), (docSnap) => {
+    const unsubPlayer = onSnapshot(doc(db, `games/${game.id}/players`, currentUserUid), (docSnap) => {
       if (docSnap.exists()) {
         setPlayer({ id: docSnap.id, ...docSnap.data() } as Player);
       }
@@ -86,13 +92,10 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       unsubTeams();
       unsubFigures();
     };
-  }, [game?.id, currentUser]);
+  }, [game?.id, currentUserUid]);
 
   const createGame = async (playerName: string) => {
-    if (!auth.currentUser) await signIn();
-    if (!auth.currentUser) throw new Error("User not authenticated");
-
-    const uid = auth.currentUser.uid;
+    const uid = getLocalUid();
     const gameId = Math.random().toString(36).substring(2, 8).toUpperCase();
 
     await setDoc(doc(db, 'games', gameId), {
@@ -116,10 +119,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const joinGame = async (gameId: string, playerName: string) => {
-    if (!auth.currentUser) await signIn();
-    if (!auth.currentUser) throw new Error("User not authenticated");
-
-    const uid = auth.currentUser.uid;
+    const uid = getLocalUid();
     let assignedTeamId = 'team0';
 
     await runTransaction(db, async (transaction) => {
@@ -195,9 +195,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // 🔥 Actualiza score del jugador Y equipo en tiempo real
   const catchFigure = async (figure: Figure): Promise<boolean> => {
-    if (!game?.id || !auth.currentUser) return false;
+    if (!game?.id) return false;
 
-    const uid = auth.currentUser.uid;
+    const uid = getLocalUid();
     const figureRef = doc(db, `games/${game.id}/figures`, figure.id);
     const playerRef = doc(db, `games/${game.id}/players`, uid);
 
