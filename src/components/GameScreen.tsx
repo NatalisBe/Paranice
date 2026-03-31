@@ -21,6 +21,10 @@ export const GameScreen = () => {
   const [optimisticPlayerScore, setOptimisticPlayerScore] = useState(0);
   const [optimisticTeamScore, setOptimisticTeamScore] = useState(0);
 
+  const [rivalReaction, setRivalReaction] = useState<{ teamName: string, teamIndex: number, message: string } | null>(null);
+  const hasTriggered15s = useRef(false);
+  const hasTriggered30s = useRef(false);
+
   useEffect(() => {
     setOptimisticPlayerScore(player?.score || 0);
   }, [player?.score]);
@@ -56,6 +60,52 @@ export const GameScreen = () => {
 
     return () => clearInterval(interval);
   }, [game?.startedAt, game?.duration, game?.id, isHost, finalizeScores]);
+
+  // 😈 Reacción Rival
+  useEffect(() => {
+    if (!game?.startedAt) return;
+    const elapsed = Math.floor((Date.now() - game.startedAt) / 1000);
+
+    const triggerReaction = () => {
+      if (!teams || teams.length === 0) return;
+      let maxScore = -Infinity;
+      let winningTeam = teams[0];
+      let winningIndex = 0;
+
+      teams.forEach((t, idx) => {
+        if (t.totalScore > maxScore) {
+          maxScore = t.totalScore;
+          winningTeam = t;
+          winningIndex = idx;
+        }
+      });
+
+      const myTeam = teams.find(t => t.id === player?.teamId);
+      // Solo mostrar si nuestro equipo va perdiendo
+      if (myTeam && myTeam.totalScore < maxScore) {
+        const messages = ["¡Te estamos ganando! 😈", "¡Vamos arriba! 🚀", "¡Más rápido! 🐢", "¡Coman polvo! 💨"];
+        const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+        
+        setRivalReaction({
+          teamName: winningTeam.name,
+          teamIndex: winningIndex,
+          message: randomMsg
+        });
+
+        setTimeout(() => {
+          setRivalReaction(null);
+        }, 1500); // Desaparece después de 1.5s
+      }
+    };
+
+    if (elapsed === 15 && !hasTriggered15s.current) {
+      hasTriggered15s.current = true;
+      triggerReaction();
+    } else if (elapsed === 30 && !hasTriggered30s.current) {
+      hasTriggered30s.current = true;
+      triggerReaction();
+    }
+  }, [timeLeft, game?.startedAt, teams, player?.teamId]);
 
   // ⏳ Marcar figuras expiradas
   useEffect(() => {
@@ -190,6 +240,38 @@ export const GameScreen = () => {
           </div>
         </div>
       </div>
+
+      {/* Reacción Rival */}
+      <AnimatePresence>
+        {rivalReaction && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.5, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.3 } }}
+            className={cn(
+              "absolute z-50 flex flex-col items-center pointer-events-none drop-shadow-2xl",
+              rivalReaction.teamIndex % 2 === 0 ? "top-32 left-6" : "top-32 right-6"
+            )}
+          >
+            <div className="bg-white/95 backdrop-blur-sm text-pn-accent font-black px-4 py-2 rounded-2xl shadow-xl mb-2 text-center border-2 border-pn-accent animate-bounce">
+              {rivalReaction.message}
+            </div>
+            <div className="w-28 h-28 relative">
+              <CharacterSVG
+                id={['mermaid-cookie', 'mr-tv', 'semillita', 'spreadie'][rivalReaction.teamIndex % 4]}
+                className="w-full h-full object-contain drop-shadow-md"
+              />
+              <div className="absolute -top-2 -right-2 text-3xl animate-pulse">😈</div>
+            </div>
+            <div className={cn(
+              "mt-2 px-4 py-1 rounded-full text-sm font-bold text-white shadow-md border-2 border-white/50",
+              ['bg-pink-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-500'][rivalReaction.teamIndex % 4]
+            )}>
+              {rivalReaction.teamName}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Play Area */}
       <div className="absolute inset-0 z-10">

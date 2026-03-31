@@ -5,7 +5,6 @@ import { Lobby } from './components/Lobby';
 import { Countdown } from './components/Countdown';
 import { GameScreen } from './components/GameScreen';
 import { Podium } from './components/Podium';
-import { CharactersCatalog } from './components/CharactersCatalog';
 
 const RulesScreen = ({ onAccept }: { onAccept: () => void }) => {
   return (
@@ -46,13 +45,11 @@ const RulesScreen = ({ onAccept }: { onAccept: () => void }) => {
 const GameRouter = () => {
   const { game } = useGame();
   const [hasSeenRules, setHasSeenRules] = useState(false);
-  const [hasSeenCatalog, setHasSeenCatalog] = useState(false);
 
   // Cada vez que se crea/entra a una partida nueva, mostramos reglas de nuevo
   useEffect(() => {
     if (game?.id) {
       setHasSeenRules(false);
-      setHasSeenCatalog(false);
     }
   }, [game?.id]);
 
@@ -60,10 +57,6 @@ const GameRouter = () => {
 
   if (!hasSeenRules && game.status === 'waiting') {
     return <RulesScreen onAccept={() => setHasSeenRules(true)} />;
-  }
-
-  if (hasSeenRules && !hasSeenCatalog && game.status === 'waiting') {
-    return <CharactersCatalog onAccept={() => setHasSeenCatalog(true)} />;
   }
 
   if (game.status === 'waiting') return <Lobby />;
