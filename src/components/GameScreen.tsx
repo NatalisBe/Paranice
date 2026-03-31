@@ -9,7 +9,7 @@ import { updateDoc, doc } from 'firebase/firestore';
 import { CharacterSVG } from './Characters';
 
 export const GameScreen = () => {
-  const { game, player, teams, figures, catchFigure, finalizeScores } = useGame();
+  const { game, player, teams, figures, catchFigure, finalizeScores, isMuted } = useGame();
   const [timeLeft, setTimeLeft] = useState(40);
   const [pops, setPops] = useState<{ id: string, x: number, y: number, points: number, type: string }[]>([]);
   const [caughtIds, setCaughtIds] = useState<Set<string>>(new Set());
@@ -87,10 +87,12 @@ export const GameScreen = () => {
     setCaughtIds(prev => new Set(prev).add(figure.id));
 
     // 🔊 Sonido
-    const audio = new Audio(
-      'https://image2url.com/r2/default/audio/1774856742267-0abfb452-0ba4-455a-904c-646fd2ed0c4f.mp3'
-    );
-    audio.play().catch(() => {});
+    if (!isMuted) {
+      const audio = new Audio(
+        'https://image2url.com/r2/default/audio/1774856742267-0abfb452-0ba4-455a-904c-646fd2ed0c4f.mp3'
+      );
+      audio.play().catch(() => {});
+    }
 
     // ⭐ Pop visual con puntaje optimista
     let points = 0;

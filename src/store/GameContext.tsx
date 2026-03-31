@@ -25,6 +25,8 @@ interface GameContextType {
   catchFigure: (figure: Figure) => Promise<boolean>;
   resetGame: () => Promise<void>;
   finalizeScores: () => Promise<void>;
+  isMuted: boolean;
+  toggleMute: () => void;
 }
 
 const GameContext = createContext<GameContextType | null>(null);
@@ -50,6 +52,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [teams, setTeams] = useState<Team[]>([]);
   const [figures, setFigures] = useState<Figure[]>([]);
   const [currentUserUid, setCurrentUserUid] = useState<string | null>(null);
+  const [isMuted, setIsMuted] = useState(false);
+
+  const toggleMute = () => setIsMuted(prev => !prev);
 
   useEffect(() => {
     setCurrentUserUid(getLocalUid());
@@ -307,7 +312,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         startGame,
         catchFigure,
         resetGame,
-        finalizeScores
+        finalizeScores,
+        isMuted,
+        toggleMute
       }}
     >
       {children}
