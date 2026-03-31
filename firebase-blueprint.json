@@ -1,0 +1,131 @@
+{
+  "entities": {
+    "Game": {
+      "title": "Game",
+      "description": "A game session",
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["waiting", "countdown", "playing", "finished"]
+        },
+        "hostId": {
+          "type": "string"
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "duration": {
+          "type": "number"
+        }
+      },
+      "required": ["status", "hostId", "duration"]
+    },
+    "Player": {
+      "title": "Player",
+      "description": "A player in a game",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "teamId": {
+          "type": "string"
+        },
+        "score": {
+          "type": "number"
+        },
+        "multiplierActive": {
+          "type": "boolean"
+        },
+        "joinedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["name", "teamId", "score", "multiplierActive", "joinedAt"]
+    },
+    "Team": {
+      "title": "Team",
+      "description": "A team in a game",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "totalScore": {
+          "type": "number"
+        },
+        "playerIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": ["name", "totalScore", "playerIds"]
+    },
+    "Figure": {
+      "title": "Figure",
+      "description": "A figure spawned in the game",
+      "type": "object",
+      "properties": {
+        "assetId": {
+          "type": "string"
+        },
+        "assetUrl": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["normal", "powerup", "bomb", "dodge"]
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "spawnedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "caughtBy": {
+          "type": "string"
+        },
+        "caughtAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["assetId", "assetUrl", "type", "x", "y", "spawnedAt"]
+    }
+  },
+  "firestore": {
+    "/games/{gameId}": {
+      "schema": {
+        "$ref": "#/entities/Game"
+      },
+      "description": "Game sessions"
+    },
+    "/games/{gameId}/players/{playerId}": {
+      "schema": {
+        "$ref": "#/entities/Player"
+      },
+      "description": "Players in a game session"
+    },
+    "/games/{gameId}/teams/{teamId}": {
+      "schema": {
+        "$ref": "#/entities/Team"
+      },
+      "description": "Teams in a game session"
+    },
+    "/games/{gameId}/figures/{figureId}": {
+      "schema": {
+        "$ref": "#/entities/Figure"
+      },
+      "description": "Figures spawned in a game session"
+    }
+  }
+}

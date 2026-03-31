@@ -1,0 +1,51 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isGameHost(gameId) {
+      return get(/databases/$(database)/documents/games/$(gameId)).data.hostId == request.auth.uid;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+    match /games/{gameId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && request.resource.data.hostId == request.auth.uid;
+      allow update: if isAuthenticated() && (
+        resource.data.hostId == request.auth.uid || 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+      );
+      
+      match /players/{playerId} {
+        allow read: if true;
+        allow create: if isAuthenticated() && playerId == request.auth.uid;
+        allow update: if isAuthenticated() && (playerId == request.auth.uid || isGameHost(gameId));
+      }
+      
+      match /teams/{teamId} {
+        allow read: if true;
+        allow create: if isAuthenticated() && isGameHost(gameId);
+        allow update: if isAuthenticated() && (isGameHost(gameId) || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['totalScore']) || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['playerIds']));
+      }
+      
+      match /figures/{figureId} {
+        allow read: if true;
+        allow create: if isAuthenticated() && isGameHost(gameId);
+        allow delete: if isAuthenticated() && isGameHost(gameId);
+        // Anyone can catch a figure if it hasn't been caught yet
+        allow update: if isAuthenticated() && 
+          (!('caughtBy' in resource.data) || resource.data.caughtBy == null) && 
+          request.resource.data.caughtBy == request.auth.uid &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['caughtBy', 'caughtAt']);
+      }
+    }
+  }
+}
