@@ -23,7 +23,7 @@ export interface Team {
   playerIds: string[];
 }
 
-export type FigureType = "normal" | "powerup" | "bomb" | "dodge";
+export type FigureType = "normal" | "powerup" | "bomb" | "dodge" | "thief";
 
 export interface Figure {
   id: string;
@@ -38,6 +38,8 @@ export interface Figure {
   animDelay: number;
   spawnDelay?: number;
   lifespan?: number;
+  victimId?: string | null;
+  pointsTransferred?: boolean;
 }
 
 export const CHARACTERS = {

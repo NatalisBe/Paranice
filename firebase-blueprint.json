@@ -46,15 +46,12 @@
       "description": "A figure spawned in the game",
       "type": "object",
       "properties": {
-        "assetId": {
-          "type": "string"
-        },
-        "assetUrl": {
+        "characterId": {
           "type": "string"
         },
         "type": {
           "type": "string",
-          "enum": ["normal", "powerup", "bomb", "dodge"]
+          "enum": ["normal", "powerup", "bomb", "dodge", "thief"]
         },
         "x": {
           "type": "number"
@@ -70,9 +67,15 @@
         },
         "caughtAt": {
           "type": "number"
+        },
+        "victimId": {
+          "type": "string"
+        },
+        "pointsTransferred": {
+          "type": "boolean"
         }
       },
-      "required": ["assetId", "assetUrl", "type", "x", "y", "spawnedAt"]
+      "required": ["characterId", "type", "x", "y", "spawnedAt"]
     }
   },
   "firestore": {

@@ -178,7 +178,36 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else if (figure.type === 'bomb') {
           points = -2;
         } else if (figure.type === 'dodge') {
-          points = 2;
+          points = 3; // Updated to match image (+3 Esquiva)
+        } else if (figure.type === 'thief') {
+          if (figure.victimId && figure.victimId !== uid) {
+            // Steal 3 points
+            const victimRef = doc(db, `games/${game.id}/players`, figure.victimId);
+            const victimDoc = await transaction.get(victimRef);
+            if (victimDoc.exists()) {
+              const victimScore = victimDoc.data().score || 0;
+              const pointsToSteal = Math.min(3, victimScore);
+              
+              transaction.update(victimRef, {
+                score: increment(-pointsToSteal)
+              });
+              transaction.update(playerRef, {
+                score: increment(pointsToSteal)
+              });
+            }
+          } else {
+            // Caught own thief or no victim, just +1
+            transaction.update(playerRef, {
+              score: increment(1)
+            });
+          }
+          
+          transaction.update(figureRef, {
+            caughtBy: uid,
+            caughtAt: Date.now(),
+            pointsTransferred: true
+          });
+          return; // Return early since we already updated playerRef
         }
 
         // Actualizar figura

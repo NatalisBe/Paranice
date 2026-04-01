@@ -24,9 +24,38 @@ export const GameScreen = () => {
   const hasTriggered15s = useRef(false);
   const hasTriggered30s = useRef(false);
 
+  const [thiefSpawned, setThiefSpawned] = useState(false);
+  const [thiefCaughtEvent, setThiefCaughtEvent] = useState<{ catcherName: string, victimName: string } | null>(null);
+  const prevFiguresRef = useRef<Figure[]>([]);
+
   useEffect(() => {
     setOptimisticPlayerScore(player?.score || 0);
   }, [player?.score]);
+
+  // Thief Events
+  useEffect(() => {
+    const newThief = figures.find(f => f.type === 'thief' && !prevFiguresRef.current.find(pf => pf.id === f.id));
+    if (newThief) {
+      setThiefSpawned(true);
+      setTimeout(() => setThiefSpawned(false), 2000);
+    }
+
+    const caughtThief = figures.find(f => f.type === 'thief' && f.caughtBy && !prevFiguresRef.current.find(pf => pf.id === f.id)?.caughtBy);
+    if (caughtThief) {
+      const catcher = players.find(p => p.id === caughtThief.caughtBy);
+      const victim = players.find(p => p.id === caughtThief.victimId);
+      if (catcher && victim && catcher.id !== victim.id) {
+        setThiefCaughtEvent({ catcherName: catcher.name, victimName: victim.name });
+        setTimeout(() => setThiefCaughtEvent(null), 3000);
+        
+        if (player?.id === victim.id && navigator.vibrate) {
+          navigator.vibrate([100, 50, 100, 50, 200]);
+        }
+      }
+    }
+
+    prevFiguresRef.current = figures;
+  }, [figures, players, player?.id]);
 
   // ⏱ Timer del juego
   useEffect(() => {
@@ -139,11 +168,17 @@ export const GameScreen = () => {
     if (figure.type === 'normal') {
       points = 1;
     } else if (figure.type === 'dodge') {
-      points = 2;
+      points = 3;
     } else if (figure.type === 'bomb') {
       points = -2;
     } else if (figure.type === 'powerup') {
       points = optimisticPlayerScore > 0 ? optimisticPlayerScore : 1;
+    } else if (figure.type === 'thief') {
+      if (figure.victimId && figure.victimId !== player?.id) {
+        points = 3;
+      } else {
+        points = 1;
+      }
     }
 
     setOptimisticPlayerScore(prev => prev + points);
@@ -224,6 +259,36 @@ export const GameScreen = () => {
         )}
       </AnimatePresence>
 
+      {/* Thief Spawn Banner */}
+      <AnimatePresence>
+        {thiefSpawned && (
+          <motion.div
+            initial={{ y: -100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -100, opacity: 0 }}
+            className="absolute top-20 left-1/2 -translate-x-1/2 z-50 bg-[#1F155B] text-[#EEDBB6] px-6 py-3 rounded-[15px] shadow-xl font-bold text-lg border-2 border-[#EEDBB6]"
+          >
+            ¡Cuidado... hay un ladrón suelto!
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Thief Caught Banner */}
+      <AnimatePresence>
+        {thiefCaughtEvent && (
+          <motion.div
+            initial={{ y: -100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -100, opacity: 0 }}
+            transition={{ type: "spring", bounce: 0.5 }}
+            className="absolute top-20 left-1/2 -translate-x-1/2 z-50 bg-[#1F155B] text-[#EEDBB6] px-6 py-3 rounded-[15px] shadow-xl border-2 border-[#EEDBB6] text-center"
+          >
+            <div className="font-bold text-lg">{thiefCaughtEvent.catcherName} robó 3 puntos</div>
+            <div className="text-sm opacity-90">a {thiefCaughtEvent.victimName}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Play Area */}
       <div className="absolute inset-0 z-10">
         <AnimatePresence>
@@ -260,7 +325,8 @@ export const GameScreen = () => {
                   className={cn(
                     "w-full h-full relative",
                     fig.type === 'dodge' ? "animate-dodge" : "figura-idle",
-                    fig.type === 'powerup' && "animate-glow"
+                    fig.type === 'powerup' && "animate-glow",
+                    fig.type === 'thief' && "brightness-75 contrast-125"
                   )}
                   style={{
                     animationDuration: `${fig.animDuration}s`,
@@ -280,6 +346,23 @@ export const GameScreen = () => {
                       💣
                     </div>
                   )}
+
+                  {fig.type === 'thief' && (
+                    <>
+                      {/* Sombrero */}
+                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-10 h-10 z-10 animate-bounce" style={{ animationDuration: '2s' }}>
+                        <svg viewBox="0 0 24 24" fill="#111"><path d="M2 20h20L12 4z"/></svg>
+                      </div>
+                      {/* Bolsita */}
+                      <div className="absolute top-1/2 -right-2 w-6 h-8 bg-[#1F155B] rounded-b-md rounded-t-sm z-10 flex items-center justify-center rotate-12">
+                        <span className="text-[#EEDBB6] text-[10px] font-bold">$</span>
+                      </div>
+                      {/* Antifaz */}
+                      <div className="absolute top-[35%] left-1/2 -translate-x-1/2 w-[60%] h-[15%] bg-[#111] rounded-full opacity-80 z-10 mix-blend-multiply" />
+                      {/* Sombra */}
+                      <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-16 h-4 bg-[#1F155B40] rounded-[100%] blur-[6px] -z-10" />
+                    </>
+                  )}
                 </div>
               </motion.div>
             ))}
@@ -293,8 +376,8 @@ export const GameScreen = () => {
           className="absolute z-30 pointer-events-none"
           style={{ left: `${pop.x}%`, top: `${pop.y}%`, transform: 'translate(-50%, -50%)' }}
         >
-          <div className="animate-splat absolute inset-0 border-pn-cream-light rounded-full" />
-          <div className="animate-pop w-24 h-24 bg-white/20 rounded-full blur-md" />
+          <div className={cn("animate-splat absolute inset-0 rounded-full", pop.type === 'thief' ? "border-[#D4AF37]" : "border-pn-cream-light")} />
+          <div className={cn("animate-pop w-24 h-24 rounded-full blur-md", pop.type === 'thief' ? "bg-[#EEDBB6]/40" : "bg-white/20")} />
 
           <div
             className="animate-score-float absolute top-0 left-1/2 -translate-x-1/2 text-3xl font-black drop-shadow-md whitespace-nowrap"
@@ -306,13 +389,17 @@ export const GameScreen = () => {
                     ? 'var(--color-pn-cream)'
                     : pop.type === 'dodge'
                       ? 'var(--color-pn-text)'
-                      : 'var(--color-pn-accent)'
+                      : pop.type === 'thief'
+                        ? '#EEDBB6'
+                        : 'var(--color-pn-accent)'
             }}
           >
             {pop.type === 'powerup' ? (
               <span className="bg-pn-accent text-pn-cream px-3 py-1 rounded-full text-xl">
                 x2
               </span>
+            ) : pop.type === 'thief' ? (
+              <span className="text-4xl">+3 🔥</span>
             ) : (
               pop.points > 0 ? `+${pop.points}` : pop.points
             )}
