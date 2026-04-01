@@ -20,9 +20,8 @@ export const GameScreen = () => {
 
   const [optimisticPlayerScore, setOptimisticPlayerScore] = useState(0);
 
-  const [rivalReaction, setRivalReaction] = useState<{ playerName: string, characterId: string, message: string } | null>(null);
-  const hasTriggered15s = useRef(false);
-  const hasTriggered30s = useRef(false);
+  const [rivalReaction, setRivalReaction] = useState<{ playerName: string, characterId: string, message: string, x: number, y: number } | null>(null);
+  const hasTriggered25s = useRef(false);
 
   const [thiefSpawned, setThiefSpawned] = useState(false);
   const [thiefCaughtEvent, setThiefCaughtEvent] = useState<{ catcherName: string, victimName: string } | null>(null);
@@ -107,7 +106,9 @@ export const GameScreen = () => {
         setRivalReaction({
           playerName: winningPlayer.name,
           characterId: winningPlayer.characterId || 'nugget-bros',
-          message: randomMsg
+          message: randomMsg,
+          x: Math.random() * 80 + 10,
+          y: Math.random() * 60 + 20
         });
 
         setTimeout(() => {
@@ -116,11 +117,8 @@ export const GameScreen = () => {
       }
     };
 
-    if (elapsed === 15 && !hasTriggered15s.current) {
-      hasTriggered15s.current = true;
-      triggerReaction();
-    } else if (elapsed === 30 && !hasTriggered30s.current) {
-      hasTriggered30s.current = true;
+    if (elapsed === 25 && !hasTriggered25s.current) {
+      hasTriggered25s.current = true;
       triggerReaction();
     }
   }, [timeLeft, game?.startedAt, players, player?.id]);
@@ -255,10 +253,12 @@ export const GameScreen = () => {
               
               setRivalReaction(null);
             }}
-            className={cn(
-              "absolute z-50 flex flex-col items-center pointer-events-auto cursor-pointer drop-shadow-2xl hover:opacity-100 transition-opacity",
-              Math.random() > 0.5 ? "top-32 left-6" : "top-32 right-6"
-            )}
+            className="absolute z-50 flex flex-col items-center pointer-events-auto cursor-pointer drop-shadow-2xl hover:opacity-100 transition-opacity"
+            style={{
+              left: `${rivalReaction.x}%`,
+              top: `${rivalReaction.y}%`,
+              transform: 'translate(-50%, -50%)'
+            }}
           >
             <div className="bg-white/95 backdrop-blur-sm text-pn-accent font-black px-4 py-2 rounded-2xl shadow-xl mb-2 text-center border-2 border-pn-accent animate-bounce">
               {rivalReaction.message}
