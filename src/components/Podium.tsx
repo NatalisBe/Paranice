@@ -8,6 +8,12 @@ export const Podium = () => {
   const { players, player, game, resetGame } = useGame();
   const [step, setStep] = useState(0);
   const isHost = game?.hostId === player?.id;
+  const [showMockingFigure, setShowMockingFigure] = useState(false);
+  const [isPopping, setIsPopping] = useState(false);
+
+  const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
+  const topPlayers = sortedPlayers.slice(0, 3);
+  const remainingPlayers = sortedPlayers.slice(3);
 
   useEffect(() => {
     // Sequence:
@@ -62,9 +68,16 @@ export const Podium = () => {
     frame();
   };
 
-  const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
-  const topPlayers = sortedPlayers.slice(0, 3);
-  const remainingPlayers = sortedPlayers.slice(3);
+  useEffect(() => {
+    if (step === 4) {
+      const isLoser = player?.id && topPlayers[0]?.id && player.id !== topPlayers[0].id;
+      if (isLoser) {
+        setShowMockingFigure(true);
+        const timer = setTimeout(() => setShowMockingFigure(false), 3000);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [step, player?.id, topPlayers]);
 
   const colors = [
     { bg: 'bg-pink-100', text: 'text-pink-800', border: 'border-pink-300' },
@@ -234,6 +247,39 @@ export const Podium = () => {
           >
             ¡Volver a Jugar!
           </button>
+        </div>
+      )}
+
+      {/* Mocking Figure for Losers */}
+      {showMockingFigure && (
+        <div className="fixed inset-0 z-[100] pointer-events-none flex items-center justify-center p-4">
+          <div 
+            onClick={() => {
+              setIsPopping(true);
+              setTimeout(() => setShowMockingFigure(false), 300);
+            }}
+            className={cn(
+              "relative pointer-events-auto cursor-pointer transition-all duration-300",
+              isPopping ? "scale-150 opacity-0 blur-md" : "animate-spawn hover:scale-110 opacity-60"
+            )}
+          >
+            {!isPopping && (
+              <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-white text-pn-accent font-black text-sm md:text-base px-4 py-2 rounded-full shadow-lg border-2 border-pn-accent whitespace-nowrap animate-bounce z-10">
+                ¡JAJA, PERDEDOR! 🤪
+              </div>
+            )}
+            
+            <div className="w-32 h-32 md:w-48 md:h-48 drop-shadow-2xl figura-idle">
+              <CharacterSVG id={topPlayers[0]?.characterId || 'ladron'} className="w-full h-full" />
+            </div>
+            
+            {isPopping && (
+              <>
+                <div className="animate-splat absolute inset-0 rounded-full border-2 border-pn-accent" />
+                <div className="animate-pop w-full h-full absolute inset-0 rounded-full blur-md bg-[#1F155B]/40" />
+              </>
+            )}
+          </div>
         </div>
       )}
     </div>
