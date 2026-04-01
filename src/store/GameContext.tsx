@@ -181,12 +181,12 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
           points = 3; // Updated to match image (+3 Esquiva)
         } else if (figure.type === 'thief') {
           if (figure.victimId && figure.victimId !== uid) {
-            // Steal 3 points
+            // Steal 10 points
             const victimRef = doc(db, `games/${game.id}/players`, figure.victimId);
             const victimDoc = await transaction.get(victimRef);
             if (victimDoc.exists()) {
               const victimScore = victimDoc.data().score || 0;
-              const pointsToSteal = Math.min(3, victimScore);
+              const pointsToSteal = Math.min(10, victimScore);
               
               transaction.update(victimRef, {
                 score: increment(-pointsToSteal)
