@@ -84,8 +84,8 @@ export const Podium = () => {
 
   return (
     <div className="min-h-screen w-full bg-pn-dark-lavender flex flex-col items-center justify-end p-4 overflow-hidden relative">
-      <h1 className="absolute top-12 text-4xl md:text-5xl font-black text-pn-cream-light text-center w-full">
-        Resultados Finales
+      <h1 className="absolute top-12 text-4xl md:text-5xl font-black text-pn-cream-light text-center w-full uppercase tracking-wider">
+        RESULTADOS FINALES
       </h1>
 
       <div className="flex items-end justify-center gap-2 md:gap-6 w-full max-w-3xl h-[60vh]">
