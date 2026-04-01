@@ -283,7 +283,7 @@ export const GameScreen = () => {
             transition={{ type: "spring", bounce: 0.5 }}
             className="absolute top-20 left-1/2 -translate-x-1/2 z-50 bg-[#1F155B] text-[#EEDBB6] px-6 py-3 rounded-[15px] shadow-xl border-2 border-[#EEDBB6] text-center"
           >
-            <div className="font-bold text-lg">{thiefCaughtEvent.catcherName} robó 3 puntos</div>
+            <div className="font-bold text-lg">{thiefCaughtEvent.catcherName} robó 10 puntos</div>
             <div className="text-sm opacity-90">a {thiefCaughtEvent.victimName}</div>
           </motion.div>
         )}

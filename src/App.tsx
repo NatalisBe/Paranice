@@ -177,7 +177,7 @@ export default function App() {
       
       {/* Global Version Footer */}
       <div className="fixed bottom-4 left-4 z-[100] pointer-events-none opacity-90">
-        <span className="text-xs font-bold text-[#7A6B96] drop-shadow-sm">v1.0.1</span>
+        <span className="text-xs font-bold text-[#7A6B96] drop-shadow-sm">v1.1.0</span>
       </div>
     </GameProvider>
   );
