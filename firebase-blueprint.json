@@ -13,8 +13,7 @@
           "type": "string"
         },
         "startedAt": {
-          "type": "string",
-          "format": "date-time"
+          "type": "number"
         },
         "duration": {
           "type": "number"
@@ -30,41 +29,17 @@
         "name": {
           "type": "string"
         },
-        "teamId": {
+        "characterId": {
           "type": "string"
         },
         "score": {
           "type": "number"
         },
-        "multiplierActive": {
-          "type": "boolean"
-        },
         "joinedAt": {
-          "type": "string",
-          "format": "date-time"
-        }
-      },
-      "required": ["name", "teamId", "score", "multiplierActive", "joinedAt"]
-    },
-    "Team": {
-      "title": "Team",
-      "description": "A team in a game",
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "totalScore": {
           "type": "number"
-        },
-        "playerIds": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
         }
       },
-      "required": ["name", "totalScore", "playerIds"]
+      "required": ["name", "score", "joinedAt"]
     },
     "Figure": {
       "title": "Figure",
@@ -88,15 +63,13 @@
           "type": "number"
         },
         "spawnedAt": {
-          "type": "string",
-          "format": "date-time"
+          "type": "number"
         },
         "caughtBy": {
           "type": "string"
         },
         "caughtAt": {
-          "type": "string",
-          "format": "date-time"
+          "type": "number"
         }
       },
       "required": ["assetId", "assetUrl", "type", "x", "y", "spawnedAt"]
@@ -114,12 +87,6 @@
         "$ref": "#/entities/Player"
       },
       "description": "Players in a game session"
-    },
-    "/games/{gameId}/teams/{teamId}": {
-      "schema": {
-        "$ref": "#/entities/Team"
-      },
-      "description": "Teams in a game session"
     },
     "/games/{gameId}/figures/{figureId}": {
       "schema": {

@@ -9,7 +9,7 @@ import { updateDoc, doc } from 'firebase/firestore';
 import { CharacterSVG } from './Characters';
 
 export const GameScreen = () => {
-  const { game, player, teams, figures, catchFigure, finalizeScores, isMuted } = useGame();
+  const { game, player, players, figures, catchFigure, isMuted } = useGame();
   const [timeLeft, setTimeLeft] = useState(40);
   const [pops, setPops] = useState<{ id: string, x: number, y: number, points: number, type: string }[]>([]);
   const [caughtIds, setCaughtIds] = useState<Set<string>>(new Set());
@@ -19,20 +19,14 @@ export const GameScreen = () => {
   const hasFinishedRef = useRef(false);
 
   const [optimisticPlayerScore, setOptimisticPlayerScore] = useState(0);
-  const [optimisticTeamScore, setOptimisticTeamScore] = useState(0);
 
-  const [rivalReaction, setRivalReaction] = useState<{ teamName: string, teamIndex: number, message: string } | null>(null);
+  const [rivalReaction, setRivalReaction] = useState<{ playerName: string, characterId: string, message: string } | null>(null);
   const hasTriggered15s = useRef(false);
   const hasTriggered30s = useRef(false);
 
   useEffect(() => {
     setOptimisticPlayerScore(player?.score || 0);
   }, [player?.score]);
-
-  useEffect(() => {
-    const myTeam = teams.find(t => t.id === player?.teamId);
-    setOptimisticTeamScore(myTeam?.totalScore || 0);
-  }, [teams, player?.teamId]);
 
   // ⏱ Timer del juego
   useEffect(() => {
@@ -47,9 +41,7 @@ export const GameScreen = () => {
         hasFinishedRef.current = true;
         
         if (isHost) {
-          finalizeScores().then(() => {
-            updateDoc(doc(db, 'games', game.id), { status: 'finished' }).catch(e => console.error("Error finishing game", e));
-          });
+          updateDoc(doc(db, 'games', game.id), { status: 'finished' }).catch(e => console.error("Error finishing game", e));
         } else {
           setTimeout(() => {
             updateDoc(doc(db, 'games', game.id), { status: 'finished' }).catch(e => console.error("Error finishing game", e));
@@ -59,7 +51,7 @@ export const GameScreen = () => {
     }, 200);
 
     return () => clearInterval(interval);
-  }, [game?.startedAt, game?.duration, game?.id, isHost, finalizeScores]);
+  }, [game?.startedAt, game?.duration, game?.id, isHost]);
 
   // 😈 Reacción Rival
   useEffect(() => {
@@ -67,28 +59,25 @@ export const GameScreen = () => {
     const elapsed = Math.floor((Date.now() - game.startedAt) / 1000);
 
     const triggerReaction = () => {
-      if (!teams || teams.length === 0) return;
+      if (!players || players.length < 2) return;
       let maxScore = -Infinity;
-      let winningTeam = teams[0];
-      let winningIndex = 0;
+      let winningPlayer = players[0];
 
-      teams.forEach((t, idx) => {
-        if (t.totalScore > maxScore) {
-          maxScore = t.totalScore;
-          winningTeam = t;
-          winningIndex = idx;
+      players.forEach((p) => {
+        if (p.score > maxScore) {
+          maxScore = p.score;
+          winningPlayer = p;
         }
       });
 
-      const myTeam = teams.find(t => t.id === player?.teamId);
-      // Solo mostrar si nuestro equipo va perdiendo
-      if (myTeam && myTeam.totalScore < maxScore) {
-        const messages = ["¡Te estamos ganando! 😈", "¡Vamos arriba! 🚀", "¡Más rápido! 🐢", "¡Coman polvo! 💨"];
+      // Solo mostrar si nuestro jugador va perdiendo
+      if (player && player.score < maxScore) {
+        const messages = ["¡Te estoy ganando! 😈", "¡Vamos arriba! 🚀", "¡Más rápido! 🐢", "¡Come polvo! 💨"];
         const randomMsg = messages[Math.floor(Math.random() * messages.length)];
         
         setRivalReaction({
-          teamName: winningTeam.name,
-          teamIndex: winningIndex,
+          playerName: winningPlayer.name,
+          characterId: winningPlayer.characterId || 'nugget-bros',
           message: randomMsg
         });
 
@@ -105,7 +94,7 @@ export const GameScreen = () => {
       hasTriggered30s.current = true;
       triggerReaction();
     }
-  }, [timeLeft, game?.startedAt, teams, player?.teamId]);
+  }, [timeLeft, game?.startedAt, players, player?.id]);
 
   // ⏳ Marcar figuras expiradas
   useEffect(() => {
@@ -158,7 +147,6 @@ export const GameScreen = () => {
     }
 
     setOptimisticPlayerScore(prev => prev + points);
-    setOptimisticTeamScore(prev => prev + points);
 
     const popId = Math.random().toString(36).substring(2, 9);
     setPops(prev => [...prev, { id: popId, x: figure.x, y: figure.y, points, type: figure.type }]);
@@ -177,23 +165,8 @@ export const GameScreen = () => {
     if (!success) {
       // Revertir si falló la transacción (ej. otro jugador la atrapó primero o hubo error)
       setOptimisticPlayerScore(player?.score || 0);
-      const myTeam = teams.find(t => t.id === player?.teamId);
-      setOptimisticTeamScore(myTeam?.totalScore || 0);
     }
   };
-
-  const myTeam = teams.find(t => t.id === player?.teamId);
-  const myTeamIndex = teams.findIndex(t => t.id === player?.teamId);
-
-  const colors = [
-    { bg: 'bg-pink-100', border: 'border-pink-300', text: 'text-pink-800', score: 'text-pink-600', badge: 'bg-pink-500' },
-    { bg: 'bg-blue-100', border: 'border-blue-300', text: 'text-blue-800', score: 'text-blue-600', badge: 'bg-blue-500' },
-    { bg: 'bg-green-100', border: 'border-green-300', text: 'text-green-800', score: 'text-green-600', badge: 'bg-green-500' },
-    { bg: 'bg-yellow-100', border: 'border-yellow-300', text: 'text-yellow-800', score: 'text-yellow-600', badge: 'bg-yellow-500' },
-    { bg: 'bg-purple-100', border: 'border-purple-300', text: 'text-purple-800', score: 'text-purple-600', badge: 'bg-purple-500' },
-  ];
-
-  const teamColor = colors[myTeamIndex >= 0 ? myTeamIndex % colors.length : 0];
 
   return (
     <div className="relative w-full h-screen bg-pn-bg overflow-hidden select-none">
@@ -201,19 +174,9 @@ export const GameScreen = () => {
 
       {/* HUD */}
       <div className="absolute top-0 left-0 w-full p-4 flex justify-between items-start z-20 pointer-events-none">
-        <div className={cn(
-          "bg-white/90 backdrop-blur-md px-4 py-2 rounded-xl shadow-md border-2",
-          teamColor.border
-        )}>
-          <div className={cn(
-            "text-xs font-bold uppercase tracking-wider",
-            teamColor.text
-          )}>{myTeam?.name}</div>
-
-          <div className={cn(
-            "text-3xl font-black",
-            teamColor.score
-          )}>{optimisticTeamScore}</div>
+        <div className="bg-white/90 backdrop-blur-md px-6 py-3 rounded-2xl shadow-lg border-2 border-pn-accent/20 flex flex-col items-center">
+          <span className="text-sm font-bold text-pn-text uppercase tracking-wider">Tu Puntaje</span>
+          <span className="text-3xl font-black text-pn-accent">{optimisticPlayerScore}</span>
         </div>
 
         <div className={cn(
@@ -222,21 +185,12 @@ export const GameScreen = () => {
         )}>
           {timeLeft}
         </div>
-
-        <div className={cn(
-          "bg-white/90 backdrop-blur-md px-4 py-2 rounded-xl shadow-md border-2 text-right",
-          teamColor.border
-        )}>
-          <div className={cn(
-            "text-xs font-bold uppercase tracking-wider",
-            teamColor.text
-          )}>{player?.name}</div>
-
-          <div className={cn(
-            "text-sm font-bold flex items-center justify-end gap-1",
-            teamColor.score
-          )}>
-            Pts: {optimisticPlayerScore}
+        
+        {/* Placeholder to keep timer centered if we want, or just player info */}
+        <div className="bg-white/90 backdrop-blur-md px-4 py-2 rounded-xl shadow-md border-2 border-pn-accent/20 text-right">
+          <div className="text-xs font-bold uppercase tracking-wider text-pn-text">{player?.name}</div>
+          <div className="w-10 h-10 mx-auto mt-1">
+            <CharacterSVG id={player?.characterId || 'nugget-bros'} className="w-full h-full object-contain" />
           </div>
         </div>
       </div>
@@ -250,7 +204,7 @@ export const GameScreen = () => {
             exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.3 } }}
             className={cn(
               "absolute z-50 flex flex-col items-center pointer-events-none drop-shadow-2xl",
-              rivalReaction.teamIndex % 2 === 0 ? "top-32 left-6" : "top-32 right-6"
+              Math.random() > 0.5 ? "top-32 left-6" : "top-32 right-6"
             )}
           >
             <div className="bg-white/95 backdrop-blur-sm text-pn-accent font-black px-4 py-2 rounded-2xl shadow-xl mb-2 text-center border-2 border-pn-accent animate-bounce">
@@ -258,16 +212,13 @@ export const GameScreen = () => {
             </div>
             <div className="w-28 h-28 relative">
               <CharacterSVG
-                id={['mermaid-cookie', 'mr-tv', 'semillita', 'spreadie'][rivalReaction.teamIndex % 4]}
+                id={rivalReaction.characterId}
                 className="w-full h-full object-contain drop-shadow-md"
               />
               <div className="absolute -top-2 -right-2 text-3xl animate-pulse">😈</div>
             </div>
-            <div className={cn(
-              "mt-2 px-4 py-1 rounded-full text-sm font-bold text-white shadow-md border-2 border-white/50",
-              ['bg-pink-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-500'][rivalReaction.teamIndex % 4]
-            )}>
-              {rivalReaction.teamName}
+            <div className="mt-2 px-4 py-1 rounded-full text-sm font-bold text-white shadow-md border-2 border-white/50 bg-pn-accent">
+              {rivalReaction.playerName}
             </div>
           </motion.div>
         )}

@@ -6,8 +6,7 @@ import { Player } from '../types';
 import { CharacterSVG } from './Characters';
 
 export const Lobby = () => {
-  const { game, player, teams, startGame } = useGame();
-  const [players, setPlayers] = useState<Player[]>([]);
+  const { game, player, players, startGame } = useGame();
   const [currentUser, setCurrentUser] = useState(auth.currentUser);
 
   useEffect(() => {
@@ -16,18 +15,6 @@ export const Lobby = () => {
   }, []);
 
   const isHost = game?.hostId === currentUser?.uid || game?.hostId === player?.id;
-
-  useEffect(() => {
-    if (!game?.id) return;
-
-    const unsub = onSnapshot(collection(db, `games/${game.id}/players`), (snap) => {
-      const p: Player[] = [];
-      snap.forEach(doc => p.push({ id: doc.id, ...doc.data() } as Player));
-      setPlayers(p);
-    });
-
-    return () => unsub();
-  }, [game?.id]);
 
   // SOLO 4 EQUIPOS: A, B, C, D
   const colors = [
@@ -48,49 +35,25 @@ export const Lobby = () => {
           </strong>
         </p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 mb-6 w-full">
-          {teams.map((team, index) => {
-            const teamPlayers = players.filter(p => p.teamId === team.id);
-            const color = colors[index % colors.length];
-
-            return (
-              <div
-                key={team.id}
-                className={`${color.bg} p-4 rounded-xl border-2 ${color.border} relative overflow-hidden`}
-              >
-                <div className="absolute -right-4 -bottom-4 opacity-20 w-24 h-24 pointer-events-none">
-                  <CharacterSVG id={color.char} className="w-full h-full" />
-                </div>
-
-                <h2 className={`text-lg md:text-xl font-bold ${color.text} mb-4 relative z-10`}>
-                  {team.name}
-                </h2>
-
-                <div className="flex flex-col gap-2 relative z-10">
-                  {teamPlayers.map(p => (
-                    <div
-                      key={p.id}
-                      className={`${color.itemBg} px-3 py-2 rounded-full shadow-sm font-bold ${color.itemText} flex items-center justify-between border ${color.itemBorder} text-sm md:text-base`}
-                    >
-                      <span className="truncate max-w-[100px] md:max-w-[150px]">{p.name}</span>
-
-                      {p.id === game?.hostId && (
-                        <span className={`text-[10px] md:text-xs ${color.hostBg} text-white px-2 py-1 rounded-full`}>
-                          Host
-                        </span>
-                      )}
-                    </div>
-                  ))}
-
-                  {teamPlayers.length === 0 && (
-                    <div className="text-sm opacity-50 italic text-center py-2">
-                      Esperando...
-                    </div>
-                  )}
-                </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-6 w-full">
+          {players.map((p) => (
+            <div
+              key={p.id}
+              className="bg-white/80 p-4 rounded-xl border-2 border-pn-accent/20 flex flex-col items-center justify-center gap-2 shadow-sm relative overflow-hidden"
+            >
+              <div className="w-16 h-16">
+                <CharacterSVG id={p.characterId || 'nugget-bros'} className="w-full h-full object-contain" />
               </div>
-            );
-          })}
+              <span className="font-bold text-pn-accent truncate w-full text-center text-sm">
+                {p.name}
+              </span>
+              {p.id === game?.hostId && (
+                <span className="absolute top-2 right-2 text-[10px] bg-pn-accent text-white px-2 py-0.5 rounded-full">
+                  Host
+                </span>
+              )}
+            </div>
+          ))}
         </div>
 
         <div className="text-pn-text font-bold mb-6">

@@ -11,7 +11,7 @@ export interface Game {
 export interface Player {
   id: string;
   name: string;
-  teamId: string;
+  characterId: string;
   score: number;
   joinedAt: number;
 }

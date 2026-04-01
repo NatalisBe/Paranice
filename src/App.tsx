@@ -5,8 +5,7 @@ import { Lobby } from './components/Lobby';
 import { Countdown } from './components/Countdown';
 import { GameScreen } from './components/GameScreen';
 import { Podium } from './components/Podium';
-import { CharactersCatalog } from './components/CharactersCatalog';
-import packageJson from '../package.json';
+import { CharacterSelection } from './components/CharacterSelection';
 
 const RulesScreen = ({ onAccept }: { onAccept: () => void }) => {
   return (
@@ -47,11 +46,13 @@ const RulesScreen = ({ onAccept }: { onAccept: () => void }) => {
 const GameRouter = () => {
   const { game } = useGame();
   const [hasSeenRules, setHasSeenRules] = useState(false);
+  const [hasSelectedCharacter, setHasSelectedCharacter] = useState(false);
 
   // Cada vez que se crea/entra a una partida nueva, mostramos reglas de nuevo
   useEffect(() => {
     if (game?.id) {
       setHasSeenRules(false);
+      setHasSelectedCharacter(false);
     }
   }, [game?.id]);
 
@@ -59,6 +60,10 @@ const GameRouter = () => {
 
   if (!hasSeenRules && game.status === 'waiting') {
     return <RulesScreen onAccept={() => setHasSeenRules(true)} />;
+  }
+
+  if (!hasSelectedCharacter && game.status === 'waiting') {
+    return <CharacterSelection onComplete={() => setHasSelectedCharacter(true)} />;
   }
 
   if (game.status === 'waiting') return <Lobby />;
@@ -139,18 +144,11 @@ const GlobalMuteButton = () => {
   );
 };
 
-const VersionFooter = () => (
-  <div className="fixed bottom-2 left-4 z-[100] text-pn-text/60 text-xs font-bold pointer-events-none">
-    v{packageJson.version}
-  </div>
-);
-
 export default function App() {
   return (
     <GameProvider>
       <BackgroundMusic />
       <GameRouter />
-      <VersionFooter />
       <GlobalMuteButton />
     </GameProvider>
   );

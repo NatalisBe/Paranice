@@ -3,27 +3,13 @@ import { useGame } from '../store/GameContext';
 import confetti from 'canvas-confetti';
 import { cn } from '../lib/utils';
 import { CharacterSVG } from './Characters';
-import { collection, getDocs, onSnapshot } from 'firebase/firestore';
-import { db } from '../lib/firebase';
-import { Player } from '../types';
 
 export const Podium = () => {
-  const { teams, player, game, resetGame } = useGame();
+  const { players, player, game, resetGame } = useGame();
   const [step, setStep] = useState(0);
-  const [allPlayers, setAllPlayers] = useState<Player[]>([]);
   const isHost = game?.hostId === player?.id;
 
   useEffect(() => {
-    let unsub: () => void;
-    // Fetch all players to show individual scores
-    if (game?.id) {
-      unsub = onSnapshot(collection(db, `games/${game.id}/players`), (snap) => {
-        const players: Player[] = [];
-        snap.forEach(doc => players.push({ id: doc.id, ...doc.data() } as Player));
-        setAllPlayers(players);
-      });
-    }
-
     // Sequence:
     // 0: "¡TIEMPO!" flash (1.5s)
     // 1: Suspenso (2s)
@@ -40,7 +26,6 @@ export const Podium = () => {
     }, 5500);
 
     return () => {
-      if (unsub) unsub();
       clearTimeout(s1);
       clearTimeout(s2);
       clearTimeout(s3);
@@ -77,15 +62,16 @@ export const Podium = () => {
     frame();
   };
 
-  const sortedTeams = [...teams].sort((a, b) => b.totalScore - a.totalScore);
-  const topTeams = sortedTeams.slice(0, 3);
+  const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
+  const topPlayers = sortedPlayers.slice(0, 3);
+  const remainingPlayers = sortedPlayers.slice(3);
 
-  // SOLO 4 EQUIPOS: A, B, C, D
   const colors = [
-    { bg: 'bg-pink-100', text: 'text-pink-800', char: 'mermaid-cookie', border: 'border-pink-300' }, // A
-    { bg: 'bg-blue-100', text: 'text-blue-800', char: 'mr-tv', border: 'border-blue-300' }, // B
-    { bg: 'bg-green-100', text: 'text-green-800', char: 'semillita', border: 'border-green-300' }, // C
-    { bg: 'bg-yellow-100', text: 'text-yellow-800', char: 'spreadie', border: 'border-yellow-300' }, // D
+    { bg: 'bg-pink-100', text: 'text-pink-800', border: 'border-pink-300' },
+    { bg: 'bg-blue-100', text: 'text-blue-800', border: 'border-blue-300' },
+    { bg: 'bg-green-100', text: 'text-green-800', border: 'border-green-300' },
+    { bg: 'bg-yellow-100', text: 'text-yellow-800', border: 'border-yellow-300' },
+    { bg: 'bg-purple-100', text: 'text-purple-800', border: 'border-purple-300' },
   ];
 
   if (step === 0) {
@@ -104,10 +90,10 @@ export const Podium = () => {
 
       <div className="flex items-end justify-center gap-2 md:gap-6 w-full max-w-3xl h-[60vh]">
         {/* 2nd Place */}
-        {topTeams[1] &&
+        {topPlayers[1] &&
           (() => {
-            const teamIndex = teams.findIndex((t) => t.id === topTeams[1].id);
-            const color = colors[teamIndex >= 0 ? teamIndex % colors.length : 0];
+            const playerIndex = players.findIndex((p) => p.id === topPlayers[1].id);
+            const color = colors[playerIndex >= 0 ? playerIndex % colors.length : 0];
 
             return (
               <div
@@ -121,22 +107,11 @@ export const Podium = () => {
                     className="w-20 h-20 md:w-28 md:h-28 mx-auto mb-2 figura-idle"
                     style={{ animationDelay: '0.5s' }}
                   >
-                    <CharacterSVG id={color.char} className="w-full h-full drop-shadow-xl" />
+                    <CharacterSVG id={topPlayers[1].characterId || 'nugget-bros'} className="w-full h-full drop-shadow-xl" />
                   </div>
 
-                  <div className="text-xl md:text-2xl">{topTeams[1].name}</div>
-                  <div className="text-sm opacity-80">{topTeams[1].totalScore} pts</div>
-
-                  {step >= 4 && (
-                    <div className="mt-2 text-xs md:text-sm text-pn-text bg-white/50 rounded-lg p-2 w-full max-w-[150px] mx-auto text-left">
-                      {allPlayers.filter(p => p.teamId === topTeams[1].id).sort((a,b) => b.score - a.score).map(p => (
-                        <div key={p.id} className="flex justify-between">
-                          <span className="truncate pr-2">{p.name}</span>
-                          <span className="font-bold">{p.score}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  <div className="text-xl md:text-2xl truncate px-2">{topPlayers[1].name}</div>
+                  <div className="text-sm opacity-80">{topPlayers[1].score} pts</div>
                 </div>
 
                 <div className={cn("w-full h-[40%] rounded-t-xl flex items-start justify-center pt-4 shadow-2xl", color.bg)}>
@@ -147,10 +122,10 @@ export const Podium = () => {
           })()}
 
         {/* 1st Place */}
-        {topTeams[0] &&
+        {topPlayers[0] &&
           (() => {
-            const teamIndex = teams.findIndex((t) => t.id === topTeams[0].id);
-            const color = colors[teamIndex >= 0 ? teamIndex % colors.length : 0];
+            const playerIndex = players.findIndex((p) => p.id === topPlayers[0].id);
+            const color = colors[playerIndex >= 0 ? playerIndex % colors.length : 0];
 
             return (
               <div
@@ -165,22 +140,11 @@ export const Podium = () => {
                   </div>
 
                   <div className="w-28 h-28 md:w-36 md:h-36 mx-auto mb-2 figura-idle">
-                    <CharacterSVG id={color.char} className="w-full h-full drop-shadow-2xl" />
+                    <CharacterSVG id={topPlayers[0].characterId || 'nugget-bros'} className="w-full h-full drop-shadow-2xl" />
                   </div>
 
-                  <div className="text-2xl md:text-3xl">{topTeams[0].name}</div>
-                  <div className="text-lg opacity-90">{topTeams[0].totalScore} pts</div>
-
-                  {step >= 4 && (
-                    <div className="mt-2 text-xs md:text-sm text-pn-text bg-white/50 rounded-lg p-2 w-full max-w-[150px] mx-auto text-left">
-                      {allPlayers.filter(p => p.teamId === topTeams[0].id).sort((a,b) => b.score - a.score).map(p => (
-                        <div key={p.id} className="flex justify-between">
-                          <span className="truncate pr-2">{p.name}</span>
-                          <span className="font-bold">{p.score}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  <div className="text-2xl md:text-3xl truncate px-2">{topPlayers[0].name}</div>
+                  <div className="text-lg opacity-90">{topPlayers[0].score} pts</div>
                 </div>
 
                 <div className={cn("w-full h-[60%] rounded-t-xl flex items-start justify-center pt-4 shadow-2xl", color.bg)}>
@@ -191,10 +155,10 @@ export const Podium = () => {
           })()}
 
         {/* 3rd Place */}
-        {topTeams[2] &&
+        {topPlayers[2] &&
           (() => {
-            const teamIndex = teams.findIndex((t) => t.id === topTeams[2].id);
-            const color = colors[teamIndex >= 0 ? teamIndex % colors.length : 0];
+            const playerIndex = players.findIndex((p) => p.id === topPlayers[2].id);
+            const color = colors[playerIndex >= 0 ? playerIndex % colors.length : 0];
 
             return (
               <div
@@ -208,22 +172,11 @@ export const Podium = () => {
                     className="w-16 h-16 md:w-24 md:h-24 mx-auto mb-2 figura-idle"
                     style={{ animationDelay: '1s' }}
                   >
-                    <CharacterSVG id={color.char} className="w-full h-full drop-shadow-xl" />
+                    <CharacterSVG id={topPlayers[2].characterId || 'nugget-bros'} className="w-full h-full drop-shadow-xl" />
                   </div>
 
-                  <div className="text-lg md:text-xl">{topTeams[2].name}</div>
-                  <div className="text-sm opacity-80">{topTeams[2].totalScore} pts</div>
-
-                  {step >= 4 && (
-                    <div className="mt-2 text-xs md:text-sm text-pn-text bg-white/50 rounded-lg p-2 w-full max-w-[150px] mx-auto text-left">
-                      {allPlayers.filter(p => p.teamId === topTeams[2].id).sort((a,b) => b.score - a.score).map(p => (
-                        <div key={p.id} className="flex justify-between">
-                          <span className="truncate pr-2">{p.name}</span>
-                          <span className="font-bold">{p.score}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  <div className="text-lg md:text-xl truncate px-2">{topPlayers[2].name}</div>
+                  <div className="text-sm opacity-80">{topPlayers[2].score} pts</div>
                 </div>
 
                 <div className={cn("w-full h-[30%] rounded-t-xl flex items-start justify-center pt-4 shadow-2xl", color.bg)}>
@@ -235,37 +188,35 @@ export const Podium = () => {
 
       </div>
 
-      {/* Ranks 4 and 5 list (solo si existen) */}
-      {step >= 4 && (
-        <div className="absolute top-20 right-4 md:top-28 md:right-8 flex flex-col gap-3 z-40">
-          {[3, 4].map((rankIndex) => {
-            const team = sortedTeams[rankIndex];
-            if (!team) return null;
-
-            const teamIndex = teams.findIndex((t) => t.id === team.id);
-            const color = colors[teamIndex >= 0 ? teamIndex % colors.length : 0];
+      {/* Remaining players list */}
+      {step >= 4 && remainingPlayers.length > 0 && (
+        <div className="absolute top-20 right-4 md:top-28 md:right-8 flex flex-col gap-3 z-40 max-h-[60vh] overflow-y-auto pr-2">
+          {remainingPlayers.map((p, index) => {
+            const rankIndex = index + 3;
+            const playerIndex = players.findIndex((pl) => pl.id === p.id);
+            const color = colors[playerIndex >= 0 ? playerIndex % colors.length : 0];
 
             return (
               <div
-                key={team.id}
+                key={p.id}
                 className={cn(
                   "flex items-center gap-3 bg-white/90 backdrop-blur-sm p-2 md:p-3 rounded-xl shadow-lg border-2 animate-spawn",
                   color.border
                 )}
-                style={{ animationDelay: `${(rankIndex - 2) * 0.3}s` }}
+                style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <div className={cn("text-xl md:text-2xl font-black opacity-50 w-6 text-center", color.text)}>
                   {rankIndex + 1}
                 </div>
 
                 <div className="w-8 h-8 md:w-10 md:h-10 figura-idle">
-                  <CharacterSVG id={color.char} className="w-full h-full drop-shadow-md" />
+                  <CharacterSVG id={p.characterId || 'nugget-bros'} className="w-full h-full drop-shadow-md" />
                 </div>
 
                 <div className="flex flex-col pr-2">
-                  <span className={cn("text-xs md:text-sm font-bold", color.text)}>{team.name}</span>
+                  <span className={cn("text-xs md:text-sm font-bold truncate max-w-[100px]", color.text)}>{p.name}</span>
                   <span className="text-[10px] md:text-xs font-bold opacity-70 text-pn-text">
-                    {team.totalScore} pts
+                    {p.score} pts
                   </span>
                 </div>
               </div>

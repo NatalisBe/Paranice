@@ -17,14 +17,14 @@ import { Game, Player, Team, Figure } from '../types';
 interface GameContextType {
   game: Game | null;
   player: Player | null;
-  teams: Team[];
+  players: Player[];
   figures: Figure[];
   joinGame: (gameId: string, playerName: string) => Promise<void>;
   createGame: (playerName: string) => Promise<string>;
   startGame: () => Promise<void>;
   catchFigure: (figure: Figure) => Promise<boolean>;
   resetGame: () => Promise<void>;
-  finalizeScores: () => Promise<void>;
+  selectCharacter: (characterId: string) => Promise<void>;
   isMuted: boolean;
   toggleMute: () => void;
 }
@@ -49,7 +49,7 @@ const getLocalUid = () => {
 export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [game, setGame] = useState<Game | null>(null);
   const [player, setPlayer] = useState<Player | null>(null);
-  const [teams, setTeams] = useState<Team[]>([]);
+  const [players, setPlayers] = useState<Player[]>([]);
   const [figures, setFigures] = useState<Figure[]>([]);
   const [currentUserUid, setCurrentUserUid] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState(false);
@@ -75,11 +75,10 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
-    const unsubTeams = onSnapshot(collection(db, `games/${game.id}/teams`), (snapshot) => {
-      const t: Team[] = [];
-      snapshot.forEach(d => t.push({ id: d.id, ...d.data() } as Team));
-      t.sort((a, b) => a.id.localeCompare(b.id));
-      setTeams(t);
+    const unsubPlayers = onSnapshot(collection(db, `games/${game.id}/players`), (snapshot) => {
+      const p: Player[] = [];
+      snapshot.forEach(d => p.push({ id: d.id, ...d.data() } as Player));
+      setPlayers(p);
     });
 
     const unsubFigures = onSnapshot(
@@ -94,7 +93,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       unsubGame();
       unsubPlayer();
-      unsubTeams();
+      unsubPlayers();
       unsubFigures();
     };
   }, [game?.id, currentUserUid]);
@@ -110,77 +109,28 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       duration: 40
     });
 
-    const teamNames = ['EQUIPO A', 'EQUIPO B', 'EQUIPO C', 'EQUIPO D'];
-    for (let i = 0; i < teamNames.length; i++) {
-      await setDoc(doc(db, `games/${gameId}/teams`, `team${i}`), {
-        name: teamNames[i],
-        totalScore: 0,
-        playerIds: []
-      });
-    }
-
     await joinGame(gameId, playerName);
     return gameId;
   };
 
   const joinGame = async (gameId: string, playerName: string) => {
     const uid = getLocalUid();
-    let assignedTeamId = 'team0';
 
-    await runTransaction(db, async (transaction) => {
-      let foundTeam = false;
-      let minPlayers = 999;
-      let minTeamId = 'team0';
-
-      for (let i = 0; i < 4; i++) {
-        const teamRef = doc(db, `games/${gameId}/teams`, `team${i}`);
-        const teamDoc = await transaction.get(teamRef);
-
-        if (teamDoc.exists()) {
-          const pIds = teamDoc.data().playerIds || [];
-
-          if (pIds.includes(uid)) {
-            assignedTeamId = `team${i}`;
-            foundTeam = true;
-            break;
-          }
-
-          if (pIds.length < minPlayers) {
-            minPlayers = pIds.length;
-            minTeamId = `team${i}`;
-          }
-
-          if (pIds.length < 2 && !foundTeam) {
-            assignedTeamId = `team${i}`;
-            transaction.update(teamRef, { playerIds: [...pIds, uid] });
-            foundTeam = true;
-            break;
-          }
-        }
-      }
-
-      if (!foundTeam) {
-        assignedTeamId = minTeamId;
-        const teamRef = doc(db, `games/${gameId}/teams`, minTeamId);
-        const teamDoc = await transaction.get(teamRef);
-
-        if (teamDoc.exists()) {
-          const pIds = teamDoc.data().playerIds || [];
-          transaction.update(teamRef, { playerIds: [...pIds, uid] });
-        }
-      }
-
-      const playerRef = doc(db, `games/${gameId}/players`, uid);
-
-      transaction.set(playerRef, {
-        name: playerName,
-        teamId: assignedTeamId,
-        score: 0,
-        joinedAt: Date.now()
-      });
+    await setDoc(doc(db, `games/${gameId}/players`, uid), {
+      name: playerName,
+      characterId: 'nugget-bros', // Default character
+      score: 0,
+      joinedAt: Date.now()
     });
 
     setGame({ id: gameId, status: 'waiting', hostId: '', startedAt: null, duration: 40 });
+  };
+
+  const selectCharacter = async (characterId: string) => {
+    if (!game?.id || !player?.id) return;
+    await updateDoc(doc(db, `games/${game.id}/players`, player.id), {
+      characterId
+    });
   };
 
   const startGame = async () => {
@@ -241,41 +191,11 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         transaction.update(playerRef, {
           score: increment(points)
         });
-
-        // 🔥 Actualizar puntaje del equipo
-        const teamRef = doc(db, `games/${game.id}/teams`, pData.teamId);
-        transaction.update(teamRef, {
-          totalScore: increment(points)
-        });
       });
       return true;
     } catch (e) {
       console.log("Missed figure", e);
       return false;
-    }
-  };
-
-  // 🔥 Calcular totalScore del equipo sumando jugadores
-  const finalizeScores = async () => {
-    if (!game?.id) return;
-
-    const playersSnap = await getDocs(collection(db, `games/${game.id}/players`));
-    const allPlayers: Player[] = [];
-
-    playersSnap.forEach(docSnap => {
-      allPlayers.push({ id: docSnap.id, ...docSnap.data() } as Player);
-    });
-
-    const teamScores: Record<string, number> = {};
-    allPlayers.forEach(p => {
-      if (!teamScores[p.teamId]) teamScores[p.teamId] = 0;
-      teamScores[p.teamId] += p.score || 0;
-    });
-
-    for (const teamId in teamScores) {
-      await updateDoc(doc(db, `games/${game.id}/teams`, teamId), {
-        totalScore: teamScores[teamId]
-      });
     }
   };
 
@@ -287,14 +207,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       startedAt: null
     });
 
-    for (const t of teams) {
-      await updateDoc(doc(db, `games/${game.id}/teams`, t.id), {
-        totalScore: 0
-      });
-    }
-
-    if (player) {
-      await updateDoc(doc(db, `games/${game.id}/players`, player.id), {
+    for (const p of players) {
+      await updateDoc(doc(db, `games/${game.id}/players`, p.id), {
         score: 0
       });
     }
@@ -305,14 +219,14 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         game,
         player,
-        teams,
+        players,
         figures,
         joinGame,
         createGame,
         startGame,
         catchFigure,
         resetGame,
-        finalizeScores,
+        selectCharacter,
         isMuted,
         toggleMute
       }}
