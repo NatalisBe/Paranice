@@ -13,7 +13,7 @@ const RulesScreen = ({ onAccept }: { onAccept: () => void }) => {
     <div className="min-h-screen w-full bg-pn-bg flex flex-col items-center justify-center p-6 overflow-y-auto relative">
       <div className="bg-white rounded-[28px] shadow-2xl w-full max-w-md overflow-hidden border-4 border-pn-accent flex flex-col max-h-[90vh] relative z-10 animate-spawn">
         {/* Header */}
-        <div className="bg-pn-cream p-5 text-center relative shrink-0">
+        <div className="p-5 text-center relative shrink-0">
           <h2 className="text-3xl font-black text-pn-accent tracking-wide">¿Cómo Jugar?</h2>
         </div>
 
