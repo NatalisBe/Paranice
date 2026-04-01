@@ -112,7 +112,7 @@ export const GameScreen = () => {
 
         setTimeout(() => {
           setRivalReaction(null);
-        }, 1500); // Desaparece después de 1.5s
+        }, 3000); // 3 seconds
       }
     };
 
@@ -235,10 +235,28 @@ export const GameScreen = () => {
         {rivalReaction && (
           <motion.div
             initial={{ opacity: 0, scale: 0.5, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.3 } }}
+            animate={{ opacity: 0.7, scale: 1, y: 0 }}
+            exit={{ 
+              scale: 0, 
+              opacity: 0, 
+              rotate: -20, 
+              transition: { duration: 0.2, ease: "easeOut" } 
+            }}
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              const xPos = (rect.left + rect.width / 2) / window.innerWidth * 100;
+              const yPos = (rect.top + rect.height / 2) / window.innerHeight * 100;
+              
+              const popId = Math.random().toString(36).substring(2, 9);
+              setPops(prev => [...prev, { id: popId, x: xPos, y: yPos, points: 0, type: 'normal' }]);
+              setTimeout(() => {
+                setPops(prev => prev.filter(p => p.id !== popId));
+              }, 800);
+              
+              setRivalReaction(null);
+            }}
             className={cn(
-              "absolute z-50 flex flex-col items-center pointer-events-none drop-shadow-2xl",
+              "absolute z-50 flex flex-col items-center pointer-events-auto cursor-pointer drop-shadow-2xl hover:opacity-100 transition-opacity",
               Math.random() > 0.5 ? "top-32 left-6" : "top-32 right-6"
             )}
           >
@@ -248,7 +266,7 @@ export const GameScreen = () => {
             <div className="w-28 h-28 relative">
               <CharacterSVG
                 id={rivalReaction.characterId}
-                className="w-full h-full object-contain drop-shadow-md"
+                className="w-full h-full object-contain drop-shadow-md brightness-90 contrast-110"
               />
               <div className="absolute -top-2 -right-2 text-3xl animate-pulse">😈</div>
             </div>
