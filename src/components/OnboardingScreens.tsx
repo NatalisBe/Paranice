@@ -30,7 +30,7 @@ export const MeetCharactersScreen = ({ onComplete }: { onComplete: () => void })
     <div className="min-h-screen w-full bg-pn-bg flex flex-col items-center justify-center p-6 overflow-y-auto relative">
       <div className="bg-white rounded-[28px] shadow-2xl w-full max-w-4xl overflow-hidden border-4 border-pn-accent flex flex-col max-h-[90vh] relative z-10 animate-spawn">
         {/* Header */}
-        <div className="bg-pn-cream p-5 text-center relative shrink-0">
+        <div className="p-5 pb-0 text-center relative shrink-0">
           <h2 className="text-2xl md:text-3xl font-black text-pn-accent tracking-wide">¡Conoce a tus aliados y desafíos!</h2>
         </div>
 
@@ -46,7 +46,7 @@ export const MeetCharactersScreen = ({ onComplete }: { onComplete: () => void })
                   <div className="w-16 h-16 md:w-20 md:h-20 mb-3 figura-idle" style={{ animationDelay: `${Math.random()}s` }}>
                     <CharacterSVG id={char.id} className="w-full h-full object-contain drop-shadow-md" />
                   </div>
-                  
+
                   <div className="flex flex-col items-center gap-1 w-full">
                     <span className="text-xs md:text-sm font-bold text-pn-accent text-center leading-tight">{char.name}</span>
                     <span className={cn("text-[10px] font-black px-2 py-1 rounded-full w-full text-center whitespace-nowrap", getLabelColor(char.type))}>
