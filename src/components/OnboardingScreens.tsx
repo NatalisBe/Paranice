@@ -97,7 +97,7 @@ export const ThiefAnnouncementScreen = ({ onComplete }: { onComplete: () => void
               Por decreto real, se informa a todos los jugadores que <strong className="text-pn-accent">La Figurita Ladrón</strong> anda suelta por el reino.
             </p>
             <p className="text-pn-text text-sm leading-relaxed font-medium mb-4 text-justify">
-              Esta escurridiza figura aparecerá una sola vez por partida. Quien logre atraparla, le robará <strong className="text-pn-accent">3 puntos</strong> al jugador que vaya en segundo lugar y se los quedará para sí mismo.
+              Esta escurridiza figura aparecerá una sola vez por partida. Quien logre atraparla, le robará <strong className="text-pn-accent">10 puntos</strong> al jugador que vaya en segundo lugar y se los quedará para sí mismo.
             </p>
             <p className="text-pn-accent font-bold italic text-center text-sm mt-6">
               "¡Mantengan los ojos bien abiertos!"
