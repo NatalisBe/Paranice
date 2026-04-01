@@ -230,7 +230,7 @@ export const Podium = () => {
         <div className="absolute top-4 right-4 md:top-8 md:right-8 z-50">
           <button
             onClick={resetGame}
-            className="px-4 py-2 md:px-6 md:py-3 bg-white text-pn-accent rounded-full font-black text-sm md:text-lg shadow-xl hover:scale-105 transition-transform animate-spawn border-2 md:border-4 border-pn-accent"
+            className="px-4 py-2 md:px-6 md:py-3 bg-white text-[#52446E] rounded-full font-black text-sm md:text-lg shadow-xl hover:scale-105 transition-transform animate-spawn border-2 md:border-4 border-[#52446E]"
           >
             ¡Volver a Jugar!
           </button>

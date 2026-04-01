@@ -6,38 +6,50 @@ import { Countdown } from './components/Countdown';
 import { GameScreen } from './components/GameScreen';
 import { Podium } from './components/Podium';
 import { CharacterSelection } from './components/CharacterSelection';
+import { MeetCharactersScreen, ThiefAnnouncementScreen } from './components/OnboardingScreens';
 
 const RulesScreen = ({ onAccept }: { onAccept: () => void }) => {
   return (
-    <div className="min-h-screen w-full bg-pn-bg flex flex-col items-center justify-center p-6">
-      <div className="bg-white/80 backdrop-blur-md p-8 rounded-[15px] shadow-xl w-full max-w-md animate-spawn text-center">
-        <h1 className="text-3xl font-black text-pn-accent mb-6">¿Cómo Jugar?</h1>
+    <div className="min-h-screen w-full bg-pn-bg flex flex-col items-center justify-center p-6 overflow-y-auto relative">
+      <div className="bg-white rounded-[28px] shadow-2xl w-full max-w-md overflow-hidden border-4 border-pn-accent flex flex-col max-h-[90vh] relative z-10 animate-spawn">
+        {/* Header */}
+        <div className="bg-pn-cream p-5 text-center relative shrink-0">
+          <h2 className="text-3xl font-black text-pn-accent tracking-wide">¿Cómo Jugar?</h2>
+        </div>
 
-        <div className="space-y-4 text-left mb-8">
-          <div className="flex items-center gap-4">
-            <div className="text-3xl">👆</div>
-            <p className="text-pn-text font-bold">Toca las figuritas para ganar puntos.</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="text-3xl">💣</div>
-            <p className="text-pn-text font-bold">¡Evita las bombas! Te restan puntos.</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="text-3xl">⭐</div>
-            <p className="text-pn-text font-bold">Atrapa los power-ups para multiplicar x2.</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="text-3xl">🏃</div>
-            <p className="text-pn-text font-bold">¡Las figuras rápidas dan más puntos!</p>
+        {/* Content Box */}
+        <div className="px-6 pb-4 pt-6 flex-1 overflow-hidden bg-white flex flex-col min-h-0">
+          <div className="bg-pn-cream/30 p-5 rounded-[20px] border-2 border-pn-cream flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <div className="space-y-6 text-left">
+              <div className="flex items-center gap-4">
+                <div className="text-4xl drop-shadow-sm">👆</div>
+                <p className="text-pn-text font-bold text-sm leading-tight">Toca las figuritas para ganar puntos.</p>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="text-4xl drop-shadow-sm">💣</div>
+                <p className="text-pn-text font-bold text-sm leading-tight">¡Evita las bombas! Te restan puntos.</p>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="text-4xl drop-shadow-sm">⭐</div>
+                <p className="text-pn-text font-bold text-sm leading-tight">Atrapa los power-ups para multiplicar x2.</p>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="text-4xl drop-shadow-sm">🏃</div>
+                <p className="text-pn-text font-bold text-sm leading-tight">¡Las figuras rápidas dan más puntos!</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        <button
-          onClick={onAccept}
-          className="w-full py-4 bg-pn-accent text-pn-cream rounded-[28px] font-bold text-xl hover:opacity-90 transition-opacity shadow-lg"
-        >
-          ¡Entendido!
-        </button>
+        {/* Action Button */}
+        <div className="px-6 pb-6 pt-2 bg-white shrink-0">
+          <button
+            onClick={onAccept}
+            className="w-full py-4 bg-pn-accent text-pn-cream rounded-[28px] font-bold text-xl hover:opacity-90 transition-opacity shadow-lg hover:scale-105 transform duration-200"
+          >
+            ¡Entendido!
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -46,12 +58,16 @@ const RulesScreen = ({ onAccept }: { onAccept: () => void }) => {
 const GameRouter = () => {
   const { game } = useGame();
   const [hasSeenRules, setHasSeenRules] = useState(false);
+  const [hasSeenCharacters, setHasSeenCharacters] = useState(false);
+  const [hasSeenThief, setHasSeenThief] = useState(false);
   const [hasSelectedCharacter, setHasSelectedCharacter] = useState(false);
 
   // Cada vez que se crea/entra a una partida nueva, mostramos reglas de nuevo
   useEffect(() => {
     if (game?.id) {
       setHasSeenRules(false);
+      setHasSeenCharacters(false);
+      setHasSeenThief(false);
       setHasSelectedCharacter(false);
     }
   }, [game?.id]);
@@ -60,6 +76,14 @@ const GameRouter = () => {
 
   if (!hasSeenRules && game.status === 'waiting') {
     return <RulesScreen onAccept={() => setHasSeenRules(true)} />;
+  }
+
+  if (!hasSeenCharacters && game.status === 'waiting') {
+    return <MeetCharactersScreen onComplete={() => setHasSeenCharacters(true)} />;
+  }
+
+  if (!hasSeenThief && game.status === 'waiting') {
+    return <ThiefAnnouncementScreen onComplete={() => setHasSeenThief(true)} />;
   }
 
   if (!hasSelectedCharacter && game.status === 'waiting') {
