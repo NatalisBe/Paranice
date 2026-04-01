@@ -163,7 +163,7 @@ export const GameEngine = () => {
 
         snapshot.forEach(doc => {
           const data = doc.data();
-          if (now > data.spawnedAt + (data.lifespan || 2500) + 800) {
+          if (now > data.spawnedAt + (data.lifespan || 2500) + 4000) {
             deleteDoc(doc.ref);
           }
         });

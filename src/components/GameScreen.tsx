@@ -26,6 +26,7 @@ export const GameScreen = () => {
   const [thiefSpawned, setThiefSpawned] = useState(false);
   const [thiefCaughtEvent, setThiefCaughtEvent] = useState<{ catcherName: string, victimName: string } | null>(null);
   const prevFiguresRef = useRef<Figure[]>([]);
+  const arrivalTimes = useRef<Record<string, number>>({});
 
   useEffect(() => {
     setOptimisticPlayerScore(player?.score || 0);
@@ -125,6 +126,14 @@ export const GameScreen = () => {
 
   // ⏳ Marcar figuras expiradas
   useEffect(() => {
+    // Registrar el tiempo local de llegada
+    const nowLocal = Date.now();
+    figures.forEach(fig => {
+      if (!arrivalTimes.current[fig.id]) {
+        arrivalTimes.current[fig.id] = nowLocal;
+      }
+    });
+
     const interval = setInterval(() => {
       const now = Date.now();
 
@@ -133,7 +142,8 @@ export const GameScreen = () => {
         let changed = false;
 
         figures.forEach(fig => {
-          if (!next.has(fig.id) && now >= fig.spawnedAt + (fig.lifespan || 3000)) {
+          const arrTime = arrivalTimes.current[fig.id] || now;
+          if (!next.has(fig.id) && now >= arrTime + (fig.lifespan || 3000)) {
             next.add(fig.id);
             changed = true;
           }
@@ -173,7 +183,7 @@ export const GameScreen = () => {
       points = optimisticPlayerScore > 0 ? optimisticPlayerScore : 1;
     } else if (figure.type === 'thief') {
       if (figure.victimId && figure.victimId !== player?.id) {
-        points = 3;
+        points = 10;
       } else {
         points = 1;
       }
@@ -417,7 +427,7 @@ export const GameScreen = () => {
                 x2
               </span>
             ) : pop.type === 'thief' ? (
-              <span className="text-4xl">+3 🔥</span>
+              <span className="text-4xl">+10 🔥</span>
             ) : (
               pop.points > 0 ? `+${pop.points}` : pop.points
             )}
