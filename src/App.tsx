@@ -174,6 +174,11 @@ export default function App() {
       <BackgroundMusic />
       <GameRouter />
       <GlobalMuteButton />
+      
+      {/* Global Version Footer */}
+      <div className="fixed bottom-4 left-4 z-[100] pointer-events-none opacity-60">
+        <span className="text-xs font-bold text-pn-cream mix-blend-difference drop-shadow-md">v1.0.1</span>
+      </div>
     </GameProvider>
   );
 }
