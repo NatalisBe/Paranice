@@ -18,8 +18,6 @@ export const GameScreen = () => {
 
   const hasFinishedRef = useRef(false);
 
-  const [optimisticPlayerScore, setOptimisticPlayerScore] = useState(0);
-
   const [rivalReaction, setRivalReaction] = useState<{ playerName: string, characterId: string, message: string, x: number, y: number } | null>(null);
   const hasTriggered25s = useRef(false);
 
@@ -27,10 +25,8 @@ export const GameScreen = () => {
   const [thiefCaughtEvent, setThiefCaughtEvent] = useState<{ catcherName: string, victimName: string } | null>(null);
   const prevFiguresRef = useRef<Figure[]>([]);
   const arrivalTimes = useRef<Record<string, number>>({});
-
-  useEffect(() => {
-    setOptimisticPlayerScore(player?.score || 0);
-  }, [player?.score]);
+  
+  const currentScore = player?.score || 0;
 
   // Thief Events
   useEffect(() => {
@@ -180,7 +176,7 @@ export const GameScreen = () => {
     } else if (figure.type === 'bomb') {
       points = -2;
     } else if (figure.type === 'powerup') {
-      points = optimisticPlayerScore > 0 ? optimisticPlayerScore : 1;
+      points = currentScore > 0 ? currentScore : 1;
     } else if (figure.type === 'thief') {
       if (figure.victimId && figure.victimId !== player?.id) {
         points = 10;
@@ -188,8 +184,6 @@ export const GameScreen = () => {
         points = 1;
       }
     }
-
-    setOptimisticPlayerScore(prev => prev + points);
 
     const popId = Math.random().toString(36).substring(2, 9);
     setPops(prev => [...prev, { id: popId, x: figure.x, y: figure.y, points, type: figure.type }]);
@@ -204,11 +198,7 @@ export const GameScreen = () => {
     }, 800);
 
     // ✅ El puntaje REAL se calcula en GameContext (Firestore transaction)
-    const success = await catchFigure(figure);
-    if (!success) {
-      // Revertir si falló la transacción (ej. otro jugador la atrapó primero o hubo error)
-      setOptimisticPlayerScore(player?.score || 0);
-    }
+    catchFigure(figure).catch(e => console.error(e));
   };
 
   return (
@@ -219,7 +209,7 @@ export const GameScreen = () => {
       <div className="absolute top-0 left-0 w-full p-4 flex justify-between items-start z-20 pointer-events-none">
         <div className="bg-white/90 backdrop-blur-md px-6 py-3 rounded-2xl shadow-lg border-2 border-pn-accent/20 flex flex-col items-center">
           <span className="text-sm font-bold text-pn-text uppercase tracking-wider">Tu Puntaje</span>
-          <span className="text-3xl font-black text-pn-accent">{optimisticPlayerScore}</span>
+          <span className="text-3xl font-black text-pn-accent">{currentScore}</span>
         </div>
 
         <div className={cn(
